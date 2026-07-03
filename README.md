@@ -1,5 +1,8 @@
 # Binance Futures Testnet Trading Bot
 
+> 🚀 **Live Deployment**: [https://python-devloper-trading-bot-1.onrender.com](https://python-devloper-trading-bot-1.onrender.com)  
+> 📖 **API Docs**: [https://python-devloper-trading-bot-1.onrender.com/docs](https://python-devloper-trading-bot-1.onrender.com/docs)
+
 A **production-grade** Python trading bot for Binance USDT-M Futures **Testnet/Demo Trading**. Supports MARKET and LIMIT orders via a clean CLI and a FastAPI REST API, with full structured logging, Docker support, and Render deployment.
 
 ---
