@@ -39,6 +39,22 @@ def place_futures_order(
         
         # Add required parameters for LIMIT orders
         if order_type == "LIMIT":
+            # Fetch current market price to ensure our limit price is realistic
+            ticker_endpoint = "/fapi/v1/ticker/price"
+            logger.debug(f"HTTP Request: GET {ticker_endpoint} symbol={symbol}")
+            ticker = client.futures_symbol_ticker(symbol=symbol)
+            current_price = float(ticker['price'])
+            
+            # If price is more than 5% away from current market price, it might be rejected by Binance
+            if price is None or abs(current_price - price) / current_price > 0.05:
+                old_price = price
+                # Adjust to be 0.1% away from current price depending on side
+                if side == "BUY":
+                    price = round(current_price * 0.999, 2)
+                else:
+                    price = round(current_price * 1.001, 2)
+                logger.warning(f"LIMIT order price {old_price} is unrealistic or missing. Automatically adjusted to {price} (close to market price {current_price})")
+                
             params['price'] = price
             params['timeInForce'] = 'GTC' # Good Till Canceled
             
