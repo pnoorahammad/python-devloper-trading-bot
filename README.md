@@ -1,101 +1,254 @@
 # Binance Futures Testnet Trading Bot
 
-A production-quality Python CLI application to execute trades on the Binance Futures Testnet.
+A **production-grade** Python trading bot for Binance USDT-M Futures **Testnet/Demo Trading**. Supports MARKET and LIMIT orders via a clean CLI and a FastAPI REST API, with full structured logging, Docker support, and Render deployment.
 
-## Project Overview
+---
 
-This trading bot allows users to place MARKET and LIMIT orders (both BUY and SELL sides) on the Binance USDT-M Futures Testnet. Built with modern tooling, it uses a modular architecture, features robust error handling, detailed file-based logging, and provides an enhanced interactive CLI experience via Typer and Rich. It is fully Dockerized for seamless deployment.
+## Features
 
-## Architecture & Folder Structure
+- ✅ **MARKET and LIMIT orders** (BUY & SELL)
+- ✅ **Automatic limit price adjustment** — if price is > 5% from market, auto-corrects to a valid tick-aligned price
+- ✅ **Rich CLI** with formatted tables and progress spinners
+- ✅ **FastAPI REST API** with `/order`, `/order/market`, `/order/limit` endpoints
+- ✅ **Structured logging** — `logs/trading.log`, `logs/market_order.log`, `logs/limit_order.log`
+- ✅ **Dockerized** — both CLI and API modes
+- ✅ **Render deployment ready** via `render.yaml`
+- ✅ **Full input validation** with custom exceptions
+- ✅ **pytest test suite**
 
-- **Modular Design**: Separates the API client initialization, core order execution logic, and input validation.
-- **Exception Handling**: Uses custom exceptions (`bot/exceptions.py`) to distinguish between validation, configuration, API, and network errors.
-- **Rich CLI**: Uses `typer` and `rich` for command-line parsing, animated progress spinners, and formatted table outputs.
+---
 
-```
-python-devloper-trading-bot/
-├── bot/
-│   ├── __init__.py
-│   ├── client.py         # Binance client wrapper
-│   ├── orders.py         # Order placement logic
-│   ├── validators.py     # Strict input validation
-│   ├── config.py         # Environment configuration
-│   ├── logging_config.py # Structured logging setup
-│   └── exceptions.py     # Custom exceptions
-├── logs/                 # Output directory for trading.log
-├── examples/             # Example usage scripts
-├── tests/                # Pytest directory
-├── Dockerfile            # Containerization
-├── docker-compose.yml    # Compose for easy startup
-├── .env.example          # Template for credentials
-├── .gitignore
-├── cli.py                # Main Typer CLI entry point
-├── requirements.txt
-└── README.md
+## Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/pnoorahammad/python-devloper-trading-bot.git
+cd python-devloper-trading-bot
 ```
 
-## Installation
+### 2. Create & Activate Virtual Environment
 
-### 1. Create Virtual Environment
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
+# Windows
+venv\Scripts\activate
+# Linux/Mac
+source venv/bin/activate
 ```
 
-### 2. Install Requirements
+### 3. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure .env
-Copy `.env.example` to `.env`:
+### 4. Configure `.env`
+
 ```bash
 cp .env.example .env
 ```
-Fill in your API credentials:
-```
-BINANCE_API_KEY=your_key
-BINANCE_SECRET_KEY=your_secret
+
+Edit `.env` with your **Binance Futures Testnet** credentials:
+
+```env
+BINANCE_API_KEY=your_testnet_api_key
+BINANCE_SECRET_KEY=your_testnet_secret_key
 BINANCE_BASE_URL=https://testnet.binancefuture.com
 ```
 
-## Run Examples
+> Get credentials at: https://testnet.binancefuture.com
 
-Use the interactive CLI. See help via:
+---
+
+## CLI Usage
+
 ```bash
+# Set PYTHONPATH first (Windows PowerShell)
+$env:PYTHONPATH="."
+
+# BUY MARKET order
+python cli.py --symbol BTCUSDT --side BUY --type MARKET --quantity 0.001
+
+# SELL LIMIT order (price auto-adjusted if unrealistic)
+python cli.py --symbol BTCUSDT --side SELL --type LIMIT --quantity 0.001 --price 105000
+
+# Help
 python cli.py --help
 ```
 
-**MARKET Order Example**:
-```bash
-python cli.py --symbol BTCUSDT --side BUY --type MARKET --quantity 0.001
+### Sample CLI Output
+
+```
++--------------------------+
+|     Trading Request      |
+| +----------------------+ |
+| |     Symbol | BTCUSDT | |
+| |       Side | BUY     | |
+| | Order Type | MARKET  | |
+| |   Quantity | 0.001   | |
+| +----------------------+ |
++--------------------------+
+
++-----------------------------------------+
+|                Response                 |
+| +-------------------------------------+ |
+| |      Order ID | 18691093016         | |
+| |        Status | NEW                 | |
+| |  Executed Qty | 0.0000              | |
+| | Average Price | 0                   | |
+| |     Timestamp | 2026-07-03 15:28:00 | |
+| |        Result | Success             | |
+| +-------------------------------------+ |
++-----------------------------------------+
 ```
 
-**LIMIT Order Example**:
+---
+
+## FastAPI Usage
+
+### Start the API Server
+
 ```bash
-python cli.py --symbol BTCUSDT --side SELL --type LIMIT --quantity 0.001 --price 105000
+$env:PYTHONPATH="."
+uvicorn api:app --reload --port 8000
 ```
+
+Visit the interactive docs: **http://localhost:8000/docs**
+
+### API Endpoints
+
+| Method | Endpoint        | Description                  |
+|--------|----------------|------------------------------|
+| GET    | `/`            | Health check                 |
+| GET    | `/health`      | Health check                 |
+| POST   | `/order`       | Place MARKET or LIMIT order  |
+| POST   | `/order/market`| Place a MARKET order         |
+| POST   | `/order/limit` | Place a LIMIT order          |
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:8000/order \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "BTCUSDT", "side": "BUY", "type": "MARKET", "quantity": 0.001}'
+```
+
+### Example Response
+
+```json
+{
+  "order_id": "18691093016",
+  "symbol": "BTCUSDT",
+  "side": "BUY",
+  "order_type": "MARKET",
+  "quantity": "0.001",
+  "price": "0",
+  "status": "NEW",
+  "executed_qty": "0.0000",
+  "avg_price": "0",
+  "timestamp": 1751544480000,
+  "result": "SUCCESS"
+}
+```
+
+---
 
 ## Docker Usage
 
-To run the bot in an isolated Docker container without polluting your host environment:
+### Build and Run the FastAPI Server
 
-1. Ensure `.env` is configured.
-2. Build and run a command via `docker-compose`:
 ```bash
-docker-compose run --rm trading-bot trade --symbol BTCUSDT --side BUY --type MARKET --quantity 0.001
+docker compose up --build
 ```
 
-The logs will automatically be saved to your host's `./logs/trading.log` directory via a volume mount.
+The API will be available at **http://localhost:8000/docs**
 
-## Assumptions
+### Run CLI Commands via Docker
 
-- Python 3.11+ is installed.
-- API Keys provided belong to the Binance Futures Testnet.
-- The `pytest` framework is used for testing.
+```bash
+# MARKET order
+docker compose run --rm trading-cli --symbol BTCUSDT --side BUY --type MARKET --quantity 0.001
 
-## Troubleshooting
+# LIMIT order
+docker compose run --rm trading-cli --symbol BTCUSDT --side SELL --type LIMIT --quantity 0.001 --price 105000
+```
 
-- **Missing Credentials**: Ensure your `.env` file is loaded correctly and you've replaced the placeholder strings.
-- **API Timestamp Error**: If Binance returns a Timestamp or Signature error, make sure your system clock is correctly synchronized.
-- **Network Failures**: The bot will gracefully log and raise a `NetworkError`. Check your internet connection or if the Testnet is currently under maintenance.
+---
+
+## Logging
+
+All logs are written to the `logs/` directory:
+
+| File                      | Contents                            |
+|---------------------------|-------------------------------------|
+| `logs/trading.log`        | Combined log — all executions       |
+| `logs/market_order.log`   | Copy of log from MARKET order run   |
+| `logs/limit_order.log`    | Copy of log from LIMIT order run    |
+
+Log entries include: **timestamp**, **HTTP request**, **payload**, **response**, **errors**.
+
+---
+
+## Running Tests
+
+```bash
+$env:PYTHONPATH="."
+pytest tests/ -v
+```
+
+---
+
+## Deployment (Render)
+
+The project includes `render.yaml` for one-click deployment on [Render](https://render.com).
+
+1. Push this repository to GitHub.
+2. Go to https://render.com → **New Web Service** → connect your GitHub repo.
+3. Render will auto-detect `render.yaml`.
+4. Add your `BINANCE_API_KEY` and `BINANCE_SECRET_KEY` as environment variables in Render's dashboard.
+5. Deploy!
+
+---
+
+## Project Structure
+
+```
+├── api.py                  # FastAPI REST API wrapper
+├── cli.py                  # Typer CLI entry point
+├── bot/
+│   ├── client.py           # Binance client initialization
+│   ├── config.py           # Environment variable loading
+│   ├── exceptions.py       # Custom exception hierarchy
+│   ├── logging_config.py   # Structured logging setup
+│   ├── orders.py           # Order placement logic
+│   └── validators.py       # Input validation
+├── tests/
+│   └── test_validators.py  # pytest test suite
+├── examples/
+│   └── run_examples.sh     # Example shell scripts
+├── logs/                   # Auto-created log files
+├── Dockerfile              # Docker image (FastAPI server)
+├── docker-compose.yml      # Docker Compose (API + CLI)
+├── render.yaml             # Render deployment config
+├── requirements.txt        # Python dependencies
+├── .env.example            # Environment variable template
+└── README.md               # This file
+```
+
+---
+
+## Live Execution Evidence
+
+Both orders were successfully executed on the **Binance USDT-M Futures Testnet**:
+
+| Order Type | Symbol  | Side | Quantity | Order ID      | Status |
+|------------|---------|------|----------|---------------|--------|
+| MARKET     | BTCUSDT | BUY  | 0.001    | 18691093016   | NEW    |
+| LIMIT      | BTCUSDT | SELL | 0.001    | 18691172755   | NEW    |
+
+---
+
+## License
+
+MIT
