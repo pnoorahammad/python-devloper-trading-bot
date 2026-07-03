@@ -50,9 +50,9 @@ def place_futures_order(
                 old_price = price
                 # Adjust to be 0.1% away from current price depending on side
                 if side == "BUY":
-                    price = round(current_price * 0.999, 2)
+                    price = round(current_price * 0.999, 1)
                 else:
-                    price = round(current_price * 1.001, 2)
+                    price = round(current_price * 1.001, 1)
                 logger.warning(f"LIMIT order price {old_price} is unrealistic or missing. Automatically adjusted to {price} (close to market price {current_price})")
                 
             params['price'] = price

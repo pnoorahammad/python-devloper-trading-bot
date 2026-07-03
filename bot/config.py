@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from bot.exceptions import ConfigurationError
 
-load_dotenv()
+load_dotenv(override=True)
 
 class Config:
     BINANCE_API_KEY = os.getenv("BINANCE_API_KEY")
